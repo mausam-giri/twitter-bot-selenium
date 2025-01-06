@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Real-time Login and Trending Topics</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        background-color: #f4f7fa;
+        font-size: 16px;
+        color: #333;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 2.5rem;
+        color: #4b6cb7;
+        margin-bottom: 20px;
+      }
+
+      .status-container {
+        display: flex;
+        gap: 2rem;
+        width: 100%;
+        max-width: 1200px;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        padding: 20px;
+        border-radius: 10px;
+        background: #ffffff;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      #output {
+        height: 300px;
+        width: 430px;
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        background: #f9f9f9;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow-y: auto;
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      li {
+        margin-bottom: 4px;
+      }
+
+      button {
+        padding: 12px 24px;
+        background-color: #4b6cb7;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.2s;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      button:hover {
+        background-color: #3a5b8d;
+        transform: translateY(-2px);
+      }
+
+      button:active {
+        background-color: #2d4766;
+        transform: translateY(1px);
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <h1>Real-time Trending Topics</h1>
+
+      <div style="margin-bottom: 16px; display: flex; gap: 2rem">
+        <label for="use_proxy">
+          <input type="checkbox" name="use_proxy" id="use_proxy" />
+          Use Proxy
+        </label>
+        <label for="headless">
+          <input type="checkbox" name="headless" id="headless" />
+          Headless Chrome
+        </label>
+      </div>
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1rem;
+        "
+      >
+        <button onclick="handleEventSource()">Fetch Result</button>
+        <div style="font-weight: 500">
+          IP Address: <span id="current-ip">Not Available</span>
+        </div>
+      </div>
+      <div class="status-container">
+        <div>
+          <h3 style="margin-bottom: 4px">Trending Topics</h3>
+          <p>
+            These are the most happening topics as on&nbsp;
+            <span id="trending-time"></span>
+          </p>
+
+          <ul id="topics"></ul>
+        </div>
+        <div>
+          <h2 style="margin-bottom: 4px">Current Status</h2>
+          <ul id="output"></ul>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const outputElement = document.getElementById("output");
+      const topicsElement = document.getElementById("topics");
+      const trendingTime = document.getElementById("trending-time");
+      const currentIP = document.getElementById("current-ip");
+      // current-ip
+
+      const proxyInput = document.getElementById("use_proxy");
+      const headlessInput = document.getElementById("headless");
+
+      let url = new URL("http://localhost:5000/tweet-trending");
+
+      function handleEventSource() {
+        outputElement.innerHTML = "";
+        topicsElement.innerHTML = "";
+        if (proxyInput.checked) {
+          url.searchParams.set("use_proxy", true);
+        }
+        if (headlessInput.checked) {
+          url.searchParams.set("headless", true);
+        }
+        const eventSource = new EventSource(url);
+
+        eventSource.addEventListener(
+          "log",
+          (event) => {
+            const listEl = document.createElement("li");
+            listEl.innerText = event.data;
+
+            outputElement.appendChild(listEl);
+            outputElement.scrollTop = outputElement.scrollHeight;
+          },
+          false
+        );
+
+        eventSource.addEventListener(
+          "topics",
+          (event) => {
+            const listEl = document.createElement("li");
+            listEl.innerText = event.data;
+            topicsElement.appendChild(listEl);
+            topicsElement.scrollTop = topicsElement.scrollHeight;
+          },
+          false
+        );
+        eventSource.addEventListener(
+          "trendingTime",
+          (event) => {
+            trendingTime.innerText += event.data;
+          },
+          false
+        );
+
+        eventSource.addEventListener(
+          "ip_address",
+          (event) => {
+            currentIP.innerText = event.data;
+          },
+          false
+        );
+
+        eventSource.addEventListener("error", () => {
+          eventSource.close();
+        });
+      }
+    </script>
+  </body>
+</html>
