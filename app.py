@@ -13,7 +13,7 @@ import random, time, sys
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from pymongo.errors import OperationFailure
-from cred import MUSER, MPASS
+from cred import MUSER, MPASS, MCLUSTER
 
 from datetime import datetime, date
 
@@ -60,7 +60,7 @@ def sleep_rand():
 logger = StatusLogger()
 
 def getMongoClient():
-    uri = f"mongodb+srv://{MUSER}:{MPASS}@tweetdata.6newj.mongodb.net/?retryWrites=true&w=majority&appName=TweetData"
+    uri = f"mongodb+srv://{MUSER}:{MPASS}@{MCLUSTER}/?retryWrites=true&w=majority&appName=TweetData"
 
     client = MongoClient(uri, server_api=ServerApi('1'))
 
